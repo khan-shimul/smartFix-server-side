@@ -29,18 +29,27 @@ async function run() {
     const serviceCollection = client.db('smartFixDB').collection('services');
 
     // Service Related API
+    app.post('/service', async (req, res) => {
+      const service = req.body;
+      const result = await serviceCollection.insertOne(service);
+      res.send(result);
+    })
     app.get('/services', async (req, res) => {
         const result = await serviceCollection.find().toArray();
         res.send(result);
     });
     app.get('/service/:id', async(req, res) => {
-        
         const id = req.params.id;
-        console.log(id)
         const query = {_id: new ObjectId(id)};
         const result = await serviceCollection.findOne(query);
         res.send(result);
     });
+    app.get('/manage-service', async(req, res) => {
+      const userEmail = req.query.email;
+      const query = {providerEmail: userEmail};
+      const result = await serviceCollection.find(query).toArray();
+      res.send(result);
+    })
 
 
 
