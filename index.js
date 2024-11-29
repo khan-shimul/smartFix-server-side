@@ -49,7 +49,23 @@ async function run() {
       const query = {providerEmail: userEmail};
       const result = await serviceCollection.find(query).toArray();
       res.send(result);
-    })
+    });
+    app.patch('/update-service/:id', async (req, res) => {
+      const id = req.params.id;
+      const newService = req.body;
+      const filter = {_id: new ObjectId(id)};
+      const updatedService = {
+        $set: {
+          imgURL: newService.imgURL,
+          serviceName: newService.serviceName,
+          price: newService.price,
+          serviceArea: newService.serviceArea,
+          description: newService.description
+        }
+      };
+      const result = await serviceCollection.updateOne(filter, updatedService);
+      res.send(result)
+    });
 
 
 
