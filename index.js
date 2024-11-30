@@ -27,6 +27,7 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
     const serviceCollection = client.db('smartFixDB').collection('services');
+    const bookingCollection = client.db('smartFixDB').collection('booking');
 
     // Service Related API
     app.post('/service', async (req, res) => {
@@ -72,6 +73,22 @@ async function run() {
       const result = await serviceCollection.deleteOne(filter);
       res.send(result);
     });
+
+
+    // Booking Related API
+    app.post('/booking-service', async(req, res) => {
+      const bookingService = req.body;
+      delete bookingService._id;
+      const result = await bookingCollection.insertOne(bookingService);
+      res.send(result)
+    });
+    app.get('/booking-services', async(req, res) => {
+      const email = req.query.email;
+      const filter = {userEmail: email}
+      const result = await bookingCollection.find(filter).toArray();
+      res.send(result);
+    });
+
 
 
 
