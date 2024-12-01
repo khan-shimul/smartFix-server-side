@@ -94,6 +94,19 @@ async function run() {
       const result = await bookingCollection.deleteOne(filter);
       res.send(result)
     });
+    // To-Do Services Api
+    app.get('/services-to-do', async (req, res) => {
+      const userEmail = req.query.email;
+      const filter = {providerEmail: userEmail};
+      const result = await bookingCollection.find(filter).toArray();
+      res.send(result);
+    });
+    app.delete('/service-to-do/:id', async(req, res) => {
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)};
+      const result = await bookingCollection.deleteOne(filter);
+      res.send(result);
+    });
 
 
 
