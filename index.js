@@ -88,6 +88,12 @@ async function run() {
       const result = await bookingCollection.find(filter).toArray();
       res.send(result);
     });
+    app.delete('/booking-service/:id', async(req, res) => {
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)};
+      const result = await bookingCollection.deleteOne(filter);
+      res.send(result)
+    });
 
 
 
