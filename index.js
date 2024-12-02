@@ -101,6 +101,16 @@ async function run() {
       const result = await bookingCollection.find(filter).toArray();
       res.send(result);
     });
+    app.patch('/services-to-do/:id', async (req, res) => {
+      const id = req.params.id;
+      const newStatus = req.body;
+      const filter = {_id: new ObjectId(id)};
+      const updatedStatus = {
+        $set: {status: newStatus.status}
+      };
+      const result = await bookingCollection.updateOne(filter, updatedStatus);
+      res.send(result);
+    });
     app.delete('/service-to-do/:id', async(req, res) => {
       const id = req.params.id;
       const filter = {_id: new ObjectId(id)};
