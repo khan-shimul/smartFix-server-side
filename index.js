@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 require('dotenv').config()
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
@@ -7,9 +9,23 @@ const port = process.env.PORT || 5000;
 
 // Middleware
 app.use(express.json());
-app.use(cors());
+app.use(cookieParser());
+app.use(cors({
+  origin: ['http://localhost:5173'],
+  credentials: true
+}));
 
-
+// Middleware - Verify the token
+const verifyAccessToken = (req, res, next) => {
+  const token = req?.cookies?.token;
+  if(!token) return res.status(401).send({message: 'Unauthorized Access'});
+  // verifying if token exist
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (error, decoded) => {
+    if(error) return res.status(401).send({message: 'Unauthorized Access'});
+    req.user = decoded
+    next();
+  })
+}
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.up5eg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -21,6 +37,12 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }
 });
+
+const cookieOptions = {
+  httpOnly: true, 
+  secure: process.env.NODE_ENV === 'production' ? true : false,
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict'
+};
 
 async function run() {
   try {
@@ -82,8 +104,10 @@ async function run() {
       const result = await bookingCollection.insertOne(bookingService);
       res.send(result)
     });
-    app.get('/booking-services', async(req, res) => {
+    app.get('/booking-services', verifyAccessToken, async(req, res) => {
       const email = req.query.email;
+      // Verifying the user
+      if(email !== req.user.email) return res.status(403).send({message: 'Forbidden Access'});
       const filter = {userEmail: email}
       const result = await bookingCollection.find(filter).toArray();
       res.send(result);
@@ -95,8 +119,9 @@ async function run() {
       res.send(result)
     });
     // To-Do Services Api
-    app.get('/services-to-do', async (req, res) => {
+    app.get('/services-to-do', verifyAccessToken, async (req, res) => {
       const userEmail = req.query.email;
+      if(userEmail !== req.user.email) return res.status(403).send({message: 'Forbidden Access'})
       const filter = {providerEmail: userEmail};
       const result = await bookingCollection.find(filter).toArray();
       res.send(result);
@@ -116,6 +141,21 @@ async function run() {
       const filter = {_id: new ObjectId(id)};
       const result = await bookingCollection.deleteOne(filter);
       res.send(result);
+    });
+
+    // Authentication related api
+    app.post('/jwt', async(req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1h'});
+      res
+      .cookie('token', token, cookieOptions)
+      .send({success: true})
+    });
+    app.post('/logout', async(req, res) => {
+      console.log('clear cookie for', req.body)
+      res
+      .clearCookie('token', {...cookieOptions, maxAge: 0})
+      .send({success: true})
     });
 
 
