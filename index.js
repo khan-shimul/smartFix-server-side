@@ -57,8 +57,18 @@ async function run() {
       const result = await serviceCollection.insertOne(service);
       res.send(result);
     })
-    app.get('/services', async (req, res) => {
-        const result = await serviceCollection.find().toArray();
+    app.get('/services', async (req, res) => { 
+      const {search} = req.query;
+        let query = {};
+        if(search){
+          query = {
+            serviceName: {$regex: search, $options: 'i'}
+          }
+        }else{
+          const result = await serviceCollection.find().toArray();
+          return res.send(result);
+        }
+        const result = await serviceCollection.find(query).toArray();
         res.send(result);
     });
     app.get('/service/:id', async(req, res) => {
